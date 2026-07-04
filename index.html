@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Weather Tracker</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body { font-family: Arial, sans-serif; background: #eaf6f6; margin: 0; padding: 0; }
+        #header { background: #354259; color: #f4eee0; padding: 20px; text-align: center; }
+        #map { height: 600px; width: 90%; margin: 30px auto; border-radius: 10px; }
+        #search-container { text-align: center; margin: 20px; }
+        #weather { background: #fff; margin: 20px auto; padding: 15px; width: 300px; border-radius: 8px; box-shadow: 0 2px 8px #bbb; }
+        input, button { padding: 7px 12px; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div id="header">
+        <h1>Weather Tracker</h1>
+        <p>Get weather info of any city in the world</p>
+    </div>
+    <div id="search-container">
+        <input type="text" id="city" placeholder="Enter city for weather (anywhere)" />
+        <button onclick="getWeather()">Get Weather</button>
+    </div>
+    <div id="weather"></div>
+    <div id="map"></div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        var map = L.map('map').setView([20, 0], 2);
+        L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        map.on('click', function(e) {
+            L.marker([e.latlng.lat, e.latlng.lng]).addTo(map)
+                .bindPopup("Lat: " + e.latlng.lat.toFixed(4) + "<br>Lng: " + e.latlng.lng.toFixed(4))
+                .openPopup();
+        });
+
+        async function getWeather() {
+            var city = document.getElementById('city').value.trim();
+            if(!city) { alert("Please enter a city name."); return; }
+            var apiKey = '58dfa3a1f8d9dd21a18aac3434a3920b';
+            var url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`;
+            try {
+                let res = await fetch(url);
+                let data = await res.json();
+                if (res.ok) {
+                    document.getElementById('weather').innerHTML = `
+                        <h3>Weather in ${data.name}, ${data.sys.country}</h3>
+                        <strong>${data.weather[0].description}</strong><br>
+                        Temp: ${data.main.temp} °C<br>
+                        Wind: ${data.wind.speed} m/s<br>
+                        <img src="https://openweathermap.org/img/wn/${data.weather[0].icon}@2x.png" alt="Icon">
+                    `;
+                } else {
+                    document.getElementById('weather').innerText = "Location not found.";
+                }
+            } catch(error) {
+                document.getElementById('weather').innerText = "Weather data unavailable.";
+            }
+        }
+    </script>
+</body>
+</html>
